@@ -8,16 +8,16 @@ module User::Authentication
   end
 
   class_methods do
-    def self.create_app_session(email:, password:)
+    def create_app_session(email:, password:)
       return nil unless user = User.find_by(email: email.downcase)
 
       user.app_sessions.create if user.authenticate(password)
     end
+  end
 
-    def authenticate_app_session(app_session_id, token)
-      app_sessions.find(app_session_id).authenticate_token(token)
-    rescue ActiveRecord::RecordNotFound
-      nil
-    end
+  def authenticate_app_session(app_session_id, token)
+    app_sessions.find(app_session_id).authenticate_token(token)
+  rescue ActiveRecord::RecordNotFound
+    nil
   end
 end
