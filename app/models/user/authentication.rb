@@ -4,7 +4,12 @@ module User::Authentication
   included do
     has_many :app_sessions
     has_secure_password
-    validates :password, presence: true, length: { minimum: 8 }
+    validates :password,
+              on: %i[create password_change],
+              presence: true,
+              length: {
+                minimum: 8
+              }
   end
 
   class_methods do

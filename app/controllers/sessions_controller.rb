@@ -1,5 +1,6 @@
 class SessionsController < ApplicationController
   skip_authentication only: %i[new create]
+
   def new
   end
 
@@ -11,7 +12,7 @@ class SessionsController < ApplicationController
       )
 
     if @app_session
-      log_in(@app_session)
+      log_in(@app_session, params[:remember_me])
       flash[:success] = t(".success")
       redirect_to root_path, status: :see_other
     else
@@ -30,6 +31,7 @@ class SessionsController < ApplicationController
   private
 
   def login_params
-    @login_params ||= params.require(:user).permit(:email, :password)
+    @login_params ||=
+      params.require(:user).permit(:email, :password, :remember_me)
   end
 end

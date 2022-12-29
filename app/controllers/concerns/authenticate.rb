@@ -21,8 +21,12 @@ module Authenticate
 
   protected
 
-  def log_in(app_session)
-    cookies.encrypted.permanent[:app_session] = { value: app_session.to_h }
+  def log_in(app_session, remember_me = false)
+    if remember_me
+      cookies.encrypted.permanent[:app_session] = { value: app_session.to_h }
+    else
+      session[:app_session] = app_session.to_h
+    end
   end
 
   def log_out
@@ -41,12 +45,12 @@ module Authenticate
   end
 
   def authenticate
-    Current.app_session = authenticate_using_cookie
+    Current.app_session = authenticate_using_session_data
     Current.user = Current.app_session&.user
   end
 
-  def authenticate_using_cookie
-    app_session = cookies.encrypted[:app_session]
+  def authenticate_using_session_data
+    app_session = cookies.encrypted[:app_session] || session[:app_session]
     authenticate_using(app_session&.with_indifferent_access)
   end
 
@@ -54,7 +58,7 @@ module Authenticate
     data => { user_id:, app_session:, token: }
     user = User.find(user_id)
     user.authenticate_app_session(app_session, token)
-  rescue NoMatchingPatterError, ActiveRecord::RecordNotFound
+  rescue NoMatchingPatternError, ActiveRecord::RecordNotFound
     nil
   end
 end
