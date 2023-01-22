@@ -25,7 +25,11 @@ class RootViewController: UITabBarController {
         
         self.viewControllers = viewControllers
     }
-
+    
+    func switchToTab(_ tabIndex: Int) {
+        selectedIndex = tabIndex
+        (selectedViewController as? RoutingController)?.refreshWebView()
+    }
 }
 
 extension RootViewController {
@@ -41,5 +45,9 @@ extension RootViewController {
         let url: URL
         let icon: String
         let titleKey: String
+    }
+    
+    static func tabIndexForURL(_ url: URL) -> Int? {
+        return tabs.firstIndex { $0.url == url }
     }
 }

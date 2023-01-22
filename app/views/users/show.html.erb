@@ -1,5 +1,25 @@
 <% content_for :title, Current.user.name %>
 
+<% if turbo_native_app? %>
+  <%= button_to(
+    t("shared.navbar.logout"),
+    logout_path,
+    method: :delete,
+    data: {
+      controller: "bridge--element",
+      bridge_element_id: turbo_native_bridge_element_id(:logout),
+      bridge_element_ios: {
+        component: "bar_button",
+        index: "0",
+      }.to_json,
+      bridge_element_android: {
+        component: "menu_item",
+        order: "0",
+      }.to_json,
+    },
+  ) %>
+<% end %>
+
 <%= turbo_frame_tag :user_details do %>
   <layout-columns class="columns is-centered">
     <layout-column class="column box is-5 mt-6 p-5 m-4">

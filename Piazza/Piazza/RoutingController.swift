@@ -10,7 +10,7 @@ import Turbo
 import SafariServices
 import WebKit
 
-class RoutingController: BaseNavigationController {
+class RoutingController: BaseNavigationController, PathDirectable, WebBridgeMessageHandler {
     private enum PresentationType: String {
         case advance, replace, modal
     }
@@ -20,6 +20,7 @@ class RoutingController: BaseNavigationController {
     private(set) lazy var session: Session = {
         let session = Self.createSession()
         session.delegate = self
+        session.webView.configuration.userContentController.add(self, name: "nativeApp")
         return session
     }()
     
@@ -36,6 +37,7 @@ class RoutingController: BaseNavigationController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        clearWebBarButtonItems()
         refreshWebView()
     }
     
@@ -44,11 +46,33 @@ class RoutingController: BaseNavigationController {
             session.visit(vc)
         }
     }
+    
+    private func clearWebBarButtonItems() {
+        topViewController?.navigationItem.rightBarButtonItems = []
+    }
 }
 
 extension RoutingController: SessionDelegate {
     func session(_ session: Session, didProposeVisit proposal: VisitProposal) {
-        visit(proposal)
+        if proposal.isPathDirective {
+            executePathDirective(proposal)
+        } else if let tabIndex = RootViewController.tabIndexForURL(proposal.url) {
+            let rootViewController = self.tabBarController as? RootViewController
+            
+            if let presentedVC = presentedViewController {
+                presentedVC.dismiss(animated: true, completion: {
+                    rootViewController?.switchToTab(tabIndex)
+                })
+            } else {
+                rootViewController?.switchToTab(tabIndex)
+            }
+        } else {
+            visit(proposal)
+        }
+    }
+    
+    func sessionDidLoadWebView(_ session: Session) {
+        session.webView.attachWebBridge()
     }
     
     func session(_ session: Session, didFailRequestForVisitable visitable: Visitable, error: Error) {
@@ -67,6 +91,12 @@ extension RoutingController: SessionDelegate {
             ))
             presentedViewController?.dismiss(animated: true)
             present(alert, animated: true)
+        }
+    }
+    
+    func sessionDidFinishRequest(_ session: Session) {
+        if session == self.session {
+            clearWebBarButtonItems()
         }
     }
     
